@@ -37,7 +37,19 @@ async function run() {
     app.get("/tasks", async (req, res) => {
       //   const cursor = TaskNexCollection.find();
       //   const result = await cursor.toArray();
-      const result = await TaskNexCollection.find().toArray();
+      const result = await TaskNexCollection.find()
+        .sort({ deadline: 1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+
+    app.get("/alltasks", async (req, res) => {
+      //   const cursor = TaskNexCollection.find();
+      //   const result = await cursor.toArray();
+      const result = await TaskNexCollection.find()
+        .sort({ deadline: 1 })
+        .toArray();
       res.send(result);
     });
     // Send a ping to confirm a successful connection
