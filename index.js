@@ -26,7 +26,7 @@ async function run() {
 
     // send data to monogdb
 
-    app.post("/tasks", async (req, res) => {
+    app.post("/alltasks", async (req, res) => {
       console.log("data form client side is ", req.body);
       const newTasks = req.body;
       const result = await TaskNexCollection.insertOne(newTasks);
@@ -34,7 +34,7 @@ async function run() {
     });
 
     // get data from monogdb for 6 data
-    app.get("/tasks", async (req, res) => {
+    app.get("/alltasks", async (req, res) => {
       //   const cursor = TaskNexCollection.find();
       //   const result = await cursor.toArray();
       const result = await TaskNexCollection.find()
@@ -74,6 +74,13 @@ async function run() {
         updatedoc,
         opiton
       );
+      res.send(result);
+    });
+
+    app.delete("/alltasks/:id", async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) };
+      const result = await TaskNexCollection.deleteOne(quary);
       res.send(result);
     });
 
