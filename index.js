@@ -1,7 +1,7 @@
 require("dotenv").config();
 const cors = require("cors");
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = 5000;
 
@@ -33,7 +33,7 @@ async function run() {
       res.send(result);
     });
 
-    // get data from monogdb
+    // get data from monogdb for 6 data
     app.get("/tasks", async (req, res) => {
       //   const cursor = TaskNexCollection.find();
       //   const result = await cursor.toArray();
@@ -52,6 +52,31 @@ async function run() {
         .toArray();
       res.send(result);
     });
+    // get data by id
+    app.get("/alltasks/:id", async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) };
+      const result = await TaskNexCollection.findOne(quary);
+      res.send(result);
+    });
+
+    // update data
+    app.put("/coffees/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const opiton = { upsert: true };
+      const updatedCoffee = req.body;
+      const updatedoc = {
+        $set: updatedCoffee,
+      };
+      const result = await TaskNexCollection.updateOne(
+        filter,
+        updatedoc,
+        opiton
+      );
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
