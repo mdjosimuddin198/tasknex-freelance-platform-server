@@ -61,13 +61,13 @@ async function run() {
     });
 
     // update data
-    app.put("/coffees/:id", async (req, res) => {
+    app.put("/alltasks/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const opiton = { upsert: true };
-      const updatedCoffee = req.body;
+      const updatePost = req.body;
       const updatedoc = {
-        $set: updatedCoffee,
+        $set: updatePost,
       };
       const result = await TaskNexCollection.updateOne(
         filter,
