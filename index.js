@@ -23,6 +23,7 @@ async function run() {
   try {
     const database = client.db("TaskNex_Task");
     const TaskNexCollection = database.collection("Tasks");
+    const bidsCollection = database.collection("bids");
 
     // send data to monogdb
 
@@ -94,6 +95,37 @@ async function run() {
       const quary = { _id: new ObjectId(id) };
       const result = await TaskNexCollection.deleteOne(quary);
       res.send(result);
+    });
+
+    // get  bit from database
+    app.get("/bids/:userId", async (req, res) => {
+      const userId = req.params.userId;
+      try {
+        let bid = await bidsCollection.findOne({ userId });
+        if (!bid) {
+          await bidsCollection.insertOne({ userId, count: 0 });
+          bid = { userId, count: 0 };
+        }
+        res.json({ count: bid.count });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to get bid count" });
+      }
+    });
+    // post bids to db
+    app.post("/bids/:userId", async (req, res) => {
+      const userId = req.params.userId;
+      try {
+        const result = await bidsCollection.findOneAndUpdate(
+          { userId },
+          { $inc: { count: 1 } },
+          { returnDocument: "after", upsert: true }
+        );
+        res.json({ message: "Bid added", count: result.value?.count });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to increase bid" });
+      }
     });
 
     // Send a ping to confirm a successful connection
