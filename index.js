@@ -34,13 +34,25 @@ async function run() {
     });
 
     // get data from monogdb for 6 data
+    // app.get("/alltasks", async (req, res) => {
+    //   //   const cursor = TaskNexCollection.find();
+    //   //   const result = await cursor.toArray();
+    //   const result = await TaskNexCollection.find()
+    //     .sort({ deadline: 1 })
+    //     .limit(6)
+    //     .toArray();
+    //   res.send(result);
+    // });
+
     app.get("/alltasks", async (req, res) => {
-      //   const cursor = TaskNexCollection.find();
-      //   const result = await cursor.toArray();
-      const result = await TaskNexCollection.find()
-        .sort({ deadline: 1 })
-        .limit(6)
-        .toArray();
+      const limit = parseInt(req.query.limit);
+      let cursor = TaskNexCollection.find().sort({ deadline: 1 });
+
+      if (!isNaN(limit)) {
+        cursor = cursor.limit(limit);
+      }
+
+      const result = await cursor.toArray();
       res.send(result);
     });
 
