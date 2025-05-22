@@ -35,8 +35,6 @@ async function run() {
 
     // get data from monogdb for 6 data
     app.get("/alltasks", async (req, res) => {
-      //   const cursor = TaskNexCollection.find();
-      //   const result = await cursor.toArray();
       const result = await TaskNexCollection.find()
         .sort({ deadline: 1 })
         .limit(6)
@@ -85,6 +83,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
+
     // await client.db("admin").command({ ping: 1 });
     // console.log(
     //   "Pinged your deployment. You successfully connected to MongoDB!"
