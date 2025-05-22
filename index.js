@@ -35,6 +35,8 @@ async function run() {
 
     // get data from monogdb for 6 data
     app.get("/alltasks", async (req, res) => {
+      //   const cursor = TaskNexCollection.find();
+      //   const result = await cursor.toArray();
       const result = await TaskNexCollection.find()
         .sort({ deadline: 1 })
         .limit(6)
