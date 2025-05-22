@@ -112,6 +112,12 @@ async function run() {
         res.status(500).json({ error: "Failed to get bid count" });
       }
     });
+
+    app.get("/bids", async (req, res) => {
+      const result = await bidsCollection.find().toArray();
+      res.send(result);
+    });
+
     // post bids to db
     app.post("/bids/:userId", async (req, res) => {
       const userId = req.params.userId;
