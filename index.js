@@ -1,12 +1,36 @@
 require("dotenv").config();
 const cors = require("cors");
 const express = require("express");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = 5000;
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://tasknex-dcccf.web.app"],
+    credentials: true,
+  })
+);
+app.use(cookieParser());
+
+const validToken = (req, res, next) => {
+  const token = req?.cookies?.AccessToken;
+  // console.log("i am inside in logger mideleware", token);
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized Access" });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized Access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASS}@cluster0.jeofvdx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -66,7 +90,7 @@ async function run() {
       res.send(result);
     });
     // get data by id
-    app.get("/alltasks/:id", async (req, res) => {
+    app.get("/alltasks/:id", validToken, async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
       const result = await TaskNexCollection.findOne(quary);
@@ -74,7 +98,7 @@ async function run() {
     });
 
     // update data
-    app.put("/alltasks/:id", async (req, res) => {
+    app.put("/alltasks/:id", validToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const opiton = { upsert: true };
@@ -90,7 +114,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/alltasks/:id", async (req, res) => {
+    app.delete("/alltasks/:id", validToken, async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
       const result = await TaskNexCollection.deleteOne(quary);
@@ -98,18 +122,41 @@ async function run() {
     });
 
     // get  bit from database
-    app.get("/bids/:userId", async (req, res) => {
-      const userId = req.params.userId;
+    app.get("/bids/:jobId", validToken, async (req, res) => {
+      const jobId = req.params.jobId;
+
       try {
-        let bid = await bidsCollection.findOne({ userId });
-        if (!bid) {
-          await bidsCollection.insertOne({ userId, count: 0 });
-          bid = { userId, count: 0 };
-        }
-        res.json({ count: bid.count });
+        const bids = await bidsCollection.find({ jobId }).toArray();
+        const count = bids.length;
+
+        res.json({ count });
       } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to get bid count" });
+      }
+    });
+
+    // Create Bid API
+    app.post("/bids/:jobId/:userId", validToken, async (req, res) => {
+      const jobId = req.params.jobId;
+      const userId = req.params.userId;
+
+      try {
+        // Check if user already bid on this job
+        const existingBid = await bidsCollection.findOne({ jobId, userId });
+
+        if (existingBid) {
+          return res
+            .status(400)
+            .json({ message: "You have already bid on this job." });
+        }
+
+        // If not, insert the bid
+        const result = await bidsCollection.insertOne({ jobId, userId });
+        res.status(200).json({ message: "Bid placed successfully." });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to place bid." });
       }
     });
 
@@ -119,7 +166,7 @@ async function run() {
     });
 
     // post bids to db
-    app.post("/bids/:userId", async (req, res) => {
+    app.post("/bids/:userId", validToken, async (req, res) => {
       const userId = req.params.userId;
       try {
         const result = await bidsCollection.findOneAndUpdate(
@@ -132,6 +179,32 @@ async function run() {
         console.error(err);
         res.status(500).json({ error: "Failed to increase bid" });
       }
+    });
+
+    app.post("/jwt_token", async (req, res) => {
+      const { userEmail } = req.body;
+      const userInfo = userEmail;
+      const token = jwt.sign({ userInfo }, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      res.cookie("AccessToken", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
+
+      res.send({ message: "successfull" });
+    });
+
+    // clear cookies
+    app.post("/api/logout", (req, res) => {
+      res.clearCookie("AccessToken", {
+        httpOnly: true,
+        secure: true, // যদি তোমার অ্যাপ production এ থাকে তাহলে true করো
+        sameSite: "none",
+        path: "/",
+      });
+      res.json({ message: "Logout successful." });
     });
 
     // Send a ping to confirm a successful connection
