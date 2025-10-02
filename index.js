@@ -10,7 +10,7 @@ const port = 5000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["https://tasknex-dcccf.web.app"],
+    origin: ["https://tasknex-dcccf.web.app", "http://localhost:5173"],
     credentials: true,
   })
 );
@@ -51,25 +51,7 @@ async function run() {
 
     // send data to monogdb
 
-    app.post("/alltasks", async (req, res) => {
-      console.log("data form client side is ", req.body);
-      const newTasks = req.body;
-      const result = await TaskNexCollection.insertOne(newTasks);
-      res.send(result);
-    });
-
-    // get data from monogdb for 6 data
-    // app.get("/alltasks", async (req, res) => {
-    //   //   const cursor = TaskNexCollection.find();
-    //   //   const result = await cursor.toArray();
-    //   const result = await TaskNexCollection.find()
-    //     .sort({ deadline: 1 })
-    //     .limit(6)
-    //     .toArray();
-    //   res.send(result);
-    // });
-
-    app.get("/alltasks", async (req, res) => {
+    app.get("/job", async (req, res) => {
       const limit = parseInt(req.query.limit);
       let cursor = TaskNexCollection.find().sort({ deadline: 1 });
 
@@ -81,16 +63,15 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/alltasks", async (req, res) => {
-      //   const cursor = TaskNexCollection.find();
-      //   const result = await cursor.toArray();
-      const result = await TaskNexCollection.find()
-        .sort({ deadline: 1 })
-        .toArray();
+    app.post("/job", async (req, res) => {
+      console.log("data form client side is ", req.body);
+      const newTasks = req.body;
+      const result = await TaskNexCollection.insertOne(newTasks);
       res.send(result);
     });
+
     // get data by id
-    app.get("/alltasks/:id", validToken, async (req, res) => {
+    app.get("/job/:id", validToken, async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
       const result = await TaskNexCollection.findOne(quary);
@@ -98,7 +79,7 @@ async function run() {
     });
 
     // update data
-    app.put("/alltasks/:id", validToken, async (req, res) => {
+    app.put("/job/:id", validToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const opiton = { upsert: true };
@@ -114,7 +95,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/alltasks/:id", validToken, async (req, res) => {
+    app.delete("/job/:id", validToken, async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
       const result = await TaskNexCollection.deleteOne(quary);
